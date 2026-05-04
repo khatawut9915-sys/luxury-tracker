@@ -664,7 +664,8 @@ async function delItem(id){
   if(!confirm('ลบรายการนี้?'))return;
   showLoading(true);
   const res = await apiPost({action:'deleteTxn',id});
-  if(res.ok){ txns=txns.filter(t=>t.id!==id); renderContent(); }
+  if(res.ok){ txns=txns.filter(t=>t.id!==id);await loadAll();
+ }
   else alert('ลบไม่สำเร็จ: '+res.error);
   showLoading(false);
 }
