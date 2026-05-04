@@ -222,49 +222,48 @@ async function apiPost(body) {
   try { return res.json(); } catch(e) { return {ok:true}; }
 }
 
-// คำนวณ MONTHLY จากรายการซื้อขายอัตโนมัติ + expense จาก Sheet
+// คำนวณ MONTHLY:
+// - ปี 2025: ใช้จาก Sheet (monthly table) เพราะไม่มีรายการใน transactions
+// - ปี 2026: คำนวณจากรายการขายอัตโนมัติ + expense จาก Sheet
 function calcMonthlyFromTxns(txnList, expenseData) {
-  const result = { 2025: {}, 2026: {} };
-  // Sum profit by sell month
-  txnList.forEach(t => {
+  const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthly = {};
+
+  // ปี 2025 — ใช้จาก Sheet โดยตรง
+  monthly[2025] = expenseData[2025] || [];
+
+  // ปี 2026 — คำนวณจากรายการขาย
+  const result2026 = {};
+  txnList.filter(t=>t.year===2026).forEach(t => {
     if (!t.sell || !t.selldate) return;
     const d = new Date(t.selldate);
     if (isNaN(d)) return;
-    const yr = d.getFullYear();
-    const mon = d.getMonth(); // 0-based
-    if (!result[yr]) result[yr] = {};
-    if (!result[yr][mon]) result[yr][mon] = { profit: 0, expense: 0, expNote: '' };
-    result[yr][mon].profit += (t.sell - t.buy);
+    const mon = d.getMonth();
+    if (!result2026[mon]) result2026[mon] = { profit: 0, expense: 0, expNote: '' };
+    result2026[mon].profit += (t.sell - t.buy);
   });
 
-  // Month labels
-  const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Merge expense 2026 from Sheet
+  const exp2026 = expenseData[2026] || [];
+  exp2026.forEach((m, i) => {
+    if (!result2026[i]) result2026[i] = { profit: 0, expense: 0, expNote: '' };
+    result2026[i].expense = m.expense || 0;
+    result2026[i].expNote = m.expNote || '';
+  });
 
-  // Merge expense from Sheet
-  [2025, 2026].forEach(yr => {
-    const expArr = expenseData[yr] || [];
-    expArr.forEach((m, i) => {
-      if (!result[yr][i]) result[yr][i] = { profit: 0, expense: 0, expNote: '' };
-      result[yr][i].expense = m.expense || 0;
-      result[yr][i].expNote = m.expNote || '';
+  // Convert 2026 to array
+  const maxMon2026 = new Date().getMonth();
+  monthly[2026] = [];
+  for (let i = 0; i <= maxMon2026; i++) {
+    const d = result2026[i] || { profit: 0, expense: 0, expNote: '' };
+    monthly[2026].push({
+      m: `${labels[i]} 26`,
+      profit: Math.round(d.profit),
+      expense: d.expense,
+      expNote: d.expNote
     });
-  });
+  }
 
-  // Convert to array format
-  const monthly = {};
-  [2025, 2026].forEach(yr => {
-    const maxMon = yr === new Date().getFullYear() ? new Date().getMonth() : 11;
-    monthly[yr] = [];
-    for (let i = 0; i <= maxMon; i++) {
-      const d = result[yr][i] || { profit: 0, expense: 0, expNote: '' };
-      monthly[yr].push({
-        m: `${labels[i]} ${String(yr).slice(2)}`,
-        profit: Math.round(d.profit),
-        expense: d.expense,
-        expNote: d.expNote
-      });
-    }
-  });
   return monthly;
 }
 
@@ -690,4 +689,3 @@ loadAll();  // Load from Google Sheet on start
 </script>
 </body>
 </html>
-
