@@ -1,1 +1,26 @@
+ const res = await apiPost({action:'deleteTxn',id});
+  if(res.ok){ txns=txns.filter(t=>t.id!==id); renderContent(); }
+  else alert('ลบไม่สำเร็จ: '+res.error);
+  showLoading(false);
+}
+async function saveTxns() {} // data saved per-operation to Sheet
 
+// ── Export ──
+function exportCSV(){
+  let csv='\uFEFFหมวด,ชื่อ,หมายเหตุ,ราคาซื้อ,วันที่ซื้อ,ราคาขาย,วันที่ขาย,กำไร,%กำไร\n';
+  txns.filter(t=>t.year===txnYear).sort((a,b)=>(a.buydate||'').localeCompare(b.buydate||'')).forEach(t=>{
+    const p=t.sell!=null?t.sell-t.buy:null;
+    const pct=p!=null?(p/t.buy*100).toFixed(1):'';
+    csv+=`${t.cat},"${t.name}","${t.note||''}",${t.buy},${t.buydate||''},${t.sell||''},${t.selldate||''},${p!=null?p:''},${pct}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`luxury_${txnYear}.csv`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ── Init ──
+loadAll();  // Load from Google Sheet on start
+</script>
+</body>
