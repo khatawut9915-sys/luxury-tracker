@@ -676,7 +676,7 @@ async function saveItem(){
   };
   showLoading(true);
   const res = await apiPost({action:'saveTxn',data:obj});
-  if(res.ok){ obj.id=res.id; txns.push(obj); closeForm(); await loadAll(); }
+  if(res.ok){ obj.id=res.id; txns.push(obj); closeForm(); await loadAll(); activeTab='txn'; renderContent(); }
   else alert('บันทึกไม่สำเร็จ: '+res.error);
   showLoading(false);
 }
@@ -684,7 +684,7 @@ async function delItem(id){
   if(!confirm('ลบรายการนี้?'))return;
   showLoading(true);
   const res = await apiPost({action:'deleteTxn',id});
-  if(res.ok){ txns=txns.filter(t=>t.id!==id); await loadAll(); }
+  if(res.ok){ obj.id=res.id; txns.push(obj); closeForm(); await loadAll(); activeTab='txn'; renderContent(); }
   else alert('ลบไม่สำเร็จ: '+res.error);
   showLoading(false);
 }
