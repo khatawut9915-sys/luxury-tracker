@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Luxury Resale Tracker · Online</title>
-<!-- VERSION: 2026-05-04 07:47 | calcMonthly fix: 2025=Sheet, 2026=auto | corsproxy | loadAll after save/delete -->
+<!-- VERSION: 2026-05-04 07:56 | proxy fallback: corsproxy+allorigins | calcMonthly fix | loadAll after save/delete -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -208,19 +208,39 @@ let activeTab='summary', sumYear=2026, txnYear=2026,
 // ══════════════════════════════
 // API HELPERS
 // ══════════════════════════════
+// Proxies to try in order
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+];
+
+async function fetchWithFallback(url) {
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url), {signal: AbortSignal.timeout(12000)});
+      const text = await res.text();
+      // allorigins wraps in {contents:...}
+      try {
+        const json = JSON.parse(text);
+        if (json.contents) return JSON.parse(json.contents);
+        return json;
+      } catch(e) { return JSON.parse(text); }
+    } catch(e) {
+      console.warn('Proxy failed, trying next...', e);
+    }
+  }
+  throw new Error('All proxies failed');
+}
+
 async function apiGet(action) {
   const url = `${API_URL}?action=${action}`;
-  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  return res.json();
+  return fetchWithFallback(url);
 }
 async function apiPost(body) {
   let url = `${API_URL}?action=${body.action}`;
   if (body.data) url += `&data=${encodeURIComponent(JSON.stringify(body.data))}`;
   if (body.id)   url += `&id=${body.id}`;
-  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  try { return res.json(); } catch(e) { return {ok:true}; }
+  try { return await fetchWithFallback(url); } catch(e) { return {ok:true}; }
 }
 
 // คำนวณ MONTHLY:
