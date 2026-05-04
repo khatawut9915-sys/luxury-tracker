@@ -211,7 +211,7 @@ async function apiGet(action) {
   const url = `${API_URL}?action=${action}`;
   const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
   const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  return res.json();
+  const text = await res.text(); return JSON.parse(text);
 }
 async function apiPost(body) {
   let url = `${API_URL}?action=${body.action}`;
@@ -219,9 +219,8 @@ async function apiPost(body) {
   if (body.id)   url += `&id=${body.id}`;
   const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
   const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  try { return res.json(); } catch(e) { return {ok:true}; }
+  try { const text = await res.text(); return JSON.parse(text); } catch(e) { return {ok:true}; }
 }
-
 // Load all data from Google Sheet
 async function loadAll() {
   showLoading(true);
