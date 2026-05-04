@@ -193,7 +193,7 @@ select option{background:#fff}
 // ════════════════════════════════════════
 // ⚙️ ใส่ URL ของ Apps Script ที่ Deploy แล้ว
 // ════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbydg_OMfLnXMdFl1sPS58b9QAC-Z9tyeulXugAkID1l34f5SYPk1pUtMEQzOUzhxumh/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzvtMt5ZyWAvuritQ4lL0tkf-R9mPJW02Sw8mHeGpQEeVcDudDXA7G6UVJdGilJvtda/exec';
 
 // ══════════════════════════════
 // STATE
@@ -209,20 +209,17 @@ let activeTab='summary', sumYear=2026, txnYear=2026,
 // ══════════════════════════════
 async function apiGet(action) {
   const url = `${API_URL}?action=${action}`;
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
   const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  const data = await res.json();
-  return JSON.parse(data.contents);
+  return res.json();
 }
 async function apiPost(body) {
-  // All actions via GET to avoid CORS issues
   let url = `${API_URL}?action=${body.action}`;
   if (body.data) url += `&data=${encodeURIComponent(JSON.stringify(body.data))}`;
   if (body.id)   url += `&id=${body.id}`;
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
   const res = await fetch(proxy, {signal: AbortSignal.timeout(15000)});
-  const data = await res.json();
-  try { return JSON.parse(data.contents); } catch(e) { return {ok:true}; }
+  try { return res.json(); } catch(e) { return {ok:true}; }
 }
 
 // Load all data from Google Sheet
