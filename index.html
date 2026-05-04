@@ -656,7 +656,7 @@ async function saveItem(){
   };
   showLoading(true);
   const res = await apiPost({action:'saveTxn',data:obj});
-  if(res.ok){ obj.id=res.id; txns.push(obj); closeForm(); renderContent(); }
+  if(res.ok){ obj.id=res.id; txns.push(obj);saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent();saveTxns();closeForm();renderContent(); closeForm(); renderContent(); }
   else alert('บันทึกไม่สำเร็จ: '+res.error);
   showLoading(false);
 }
